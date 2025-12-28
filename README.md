@@ -1,201 +1,78 @@
-# ElevenLabs + Google Cloud (Gemini) — Complete Work Plan
+# VoiceGenie - Conversational AI Assistant
 
-**Goal:** Build a voice-first AI assistant that listens to user speech, uses Google Gemini (Vertex AI) to generate intelligent responses, and speaks back using ElevenLabs TTS. Delivered as a web demo (React frontend + Node backend), deployed on Google Cloud, and submitted to Devpost.
+**VoiceGenie** is a next-generation voice assistant built for the **ElevenLabs x Gemini Hackathon**. It combines the reasoning power of **Google Gemini 1.5** with the ultra-realistic voice synthesis of **ElevenLabs** to create a seamless, real-time conversational experience.
 
----
+![VoiceGenie Demo](https://via.placeholder.com/800x400?text=VoiceGenie+Demo+Screenshot) 
+*(Please replace this image link with your actual screenshot)*
 
-## High-level milestones
+## 🚀 Key Features
 
-1. **Setup & accounts** — GitHub, ElevenLabs, Google Cloud project & service account (without redeeming credits yet)
-2. **Local backend scaffold** — Express server + health & TTS endpoints
-3. **ElevenLabs integration** — Server-side TTS + STT testing
-4. **Vertex AI (Gemini) integration** — Server calls LLM to generate responses
-5. **Frontend** — Simple React app to record voice, show transcript, and play response audio
-6. **Real-time / Agent SDK (optional / advanced)** — swap to ElevenLabs Agent SDK or WebRTC for low latency conversation
-7. **RAG (optional)** — vector DB + retrieval to ground answers in documents
-8. **Deploy to Google Cloud** — Cloud Run (backend), Firebase/Hosting (frontend)
-9. **Monitoring & safety** — logs, simple metrics, rate limiting, and content safety
-10. **Demo & submission** — video recording, README, Devpost form and repo polish
+*   **🗣️ Real-time Voice Conversation**: Talk naturally to the AI and hear instant responses.
+*   **🧠 Intelligent Reasoning**: Powered by **Google Gemini 1.5 Flash** for smart, context-aware answers.
+*   **🔊 Ultra-Realistic Speech**: Utilizes **ElevenLabs Turbo v2.5** for low-latency, human-like voice output.
+*   **🎨 Immersive 3D UI**: A beautiful React frontend featuring a dynamic 3D background using **Three.js**.
+*   **🤖 Conversational Agent**: Includes a dedicated "Helping Agent" mode for continuous interaction.
 
----
+## 🛠️ Tech Stack
 
-## Detailed step-by-step plan
+### Frontend
+*   **React 18** (Vite)
+*   **Three.js** (@react-three/fiber) - fluid 3D backgrounds
+*   **ElevenLabs React SDK** - for seamless agent connection
+*   **Axios** - API communication
 
-### Phase A — Preparation (Done / Quick checks)
+### Backend
+*   **Node.js & Express**
+*   **Google Vertex AI SDK** (Gemini 1.5)
+*   **ElevenLabs API** (TTS/STT/Turbo v2.5)
 
-1. Create GitHub repo (public, MIT license).
-   * **Deliverable:** repo URL.
-2. Create ElevenLabs account & API key and save locally.
-   * **Deliverable:** key saved in `keys/` (not committed).
-3. Create Google Cloud project (`eleven-voice-hack-...`) and service account with JSON key.
-   * **Deliverable:** service account JSON in `~/keys/vertex-credentials.json`.
-4. Do **not** redeem hackathon credits yet — build locally first to avoid wasting coupons.
+## 📦 Installation & Setup
 
----
+1.  **Clone the repository**
+    ```bash
+    git clone <your-repo-url>
+    cd eleven-voice-hack
+    ```
 
-### Phase B — Local Backend (Express) — Core foundations
+2.  **Install Dependencies**
+    ```bash
+    # Install Backend Deps
+    npm install
 
-**Why:** A reliable backend orchestrates calls to Gemini and ElevenLabs and hides API keys.
+    # Install Frontend Deps
+    cd frontend
+    npm install
+    cd ..
+    ```
 
-1. Initialize Node project (`npm init -y`), install `express`, `axios`.
-2. Create `server.js` with:
-   * `/health` GET
-   * `/api/tts` POST → ElevenLabs TTS (save audio file)
-   * `/api/ttstemp` stub for early tests
-   * `/api/gemini` POST → call Vertex AI (later)
-3. Use environment variables:
-   * `ELEVEN_API_KEY`
-   * `GOOGLE_APPLICATION_CREDENTIALS` (path to JSON)
-4. Test locally: `curl` or Postman requests to endpoints.
+3.  **Environment Configuration**
+    Create a `.env` file in the root directory:
+    ```env
+    ELEVEN_API_KEY=your_elevenlabs_key
+    GEMINI_API_KEY=your_gemini_key
+    GROQ_API_KEY=your_groq_key_optional
+    PORT=3000
+    ```
 
-* **Deliverable:** working `server.js`, `npm start` prints server running, `/health` returns JSON.
+4.  **Run the Application**
 
----
+    **Start Backend:**
+    ```bash
+    npm start
+    ```
 
-### Phase C — ElevenLabs TTS & STT (voice IO)
+    **Start Frontend:**
+    ```bash
+    cd frontend
+    npm run dev
+    ```
 
-**Why:** Make the assistant speak and understand voice.
+    Open [http://localhost:5173](http://localhost:5173) to view the app!
 
-1. Implement server-side TTS that calls ElevenLabs:
-   * POST text → save `output_audio.mp3`
-   * Return audio filename / stream audio response
-2. Test by generating audio via `curl` and playing file locally.
-3. Implement basic STT test (if ElevenLabs STT exposed) — record local audio file and send to ElevenLabs STT endpoint, validate transcript.
-4. Confirm privacy/usage: do not clone real voices without consent.
+## 📸 Demo
 
-* **Deliverable:** endpoint that turns text into playable audio and a tested STT route.
+Check out our submission video here: [Watch Demo on YouTube](https://youtu.be/GW5qI2DGFPk)
 
----
+## 📄 License
 
-### Phase D — Vertex AI (Gemini) integration
-
-**Why:** Enable the agent to *think* — generate intelligent replies.
-
-1. Add server endpoint `/api/generate`:
-   * Accepts `{ prompt, history? }`.
-   * Calls Vertex AI Generative Models (Gemini) using service account credentials.
-   * Returns text output (and optional structured actions).
-2. Implement a simple prompt template and conversation history handling.
-3. Test the LLM by sending sample prompts and verifying responses.
-
-* **Deliverable:** working LLM integration that returns natural responses.
-
----
-
-### Phase E — Connect LLM → TTS pipeline
-
-**Why:** Complete the voice loop: User speech → STT → Gemini → TTS → play audio.
-
-1. Flow:
-   * Frontend records user voice (or uploads file) → POST to `/api/stt` → get text.
-   * Server sends text + context to `/api/generate` (Gemini).
-   * Server sends generated text to `/api/tts` (ElevenLabs) and returns audio or stream URL.
-2. Implement and test full single-turn voice exchange.
-
-* **Deliverable:** demo script where user speaks a question and hears the assistant reply.
-
----
-
-### Phase F — Frontend (React) — user interface
-
-**Why:** Friendly demo UI that records, displays transcript, and plays responses.
-
-1. Create React app (`create-react-app` or Vite).
-2. Pages/Components:
-   * `Home`: big mic button, transcript pane, response audio player.
-   * `Settings`: choose voice, adjust speaking rate.
-   * `Session`: shows conversation history.
-3. Use `fetch` or `axios` to call backend endpoints.
-4. Add UI polish: loader during TTS generation, transcripts, playback controls, disclaimers.
-
-* **Deliverable:** hosted frontend that interacts with backend and demonstrates voice-first flow.
-
----
-
-### Phase G — Optional Advanced: ElevenLabs Agents / Real-time
-
-**Why:** If time permits, switch to ElevenLabs Agents/SDK for better turn-taking and real-time audio streaming.
-
-1. Replace turn-based flow with the ElevenLabs React SDK or WebRTC path.
-2. Use websockets / LiveKit if needed to stream audio in both directions.
-
-* **Deliverable:** lower-latency real-time demo (impressive but optional).
-
----
-
-### Phase H — Optional: RAG (Retrieval Augmented Generation)
-
-**Why:** Ground responses in reliable documents (FAQs, product docs) — increases accuracy.
-
-1. Ingest documents into a vector DB (Pinecone, Weaviate, or Vertex Matching).
-2. On each query, retrieve top-K context, include in prompt to Gemini.
-
-* **Deliverable:** evidence-backed answers with citations.
-
----
-
-### Phase I — Deploy to Google Cloud
-
-**Why:** Deliver an accessible hosted demo and satisfy hack requirement.
-
-1. Redeem hackathon credits only now (once ready to test in cloud).
-2. Deploy backend to **Cloud Run**:
-   * Containerize Node app (Dockerfile).
-   * `gcloud builds submit` → `gcloud run deploy`.
-3. Deploy frontend to **Firebase Hosting** or Host on Cloud Run with static hosting.
-4. Set production environment variables securely (Secret Manager or Cloud Run env vars).
-
-* **Deliverable:** public demo URL.
-
----
-
-### Phase J — Monitoring, Safety & Observability
-
-**Why:** Judges love production-ready features.
-
-1. Add basic logging (structured JSON) for requests, errors, latencies.
-2. Implement rate-limiting to protect API keys and avoid runaway costs.
-3. Add simple content filter on Gemini outputs (block harmful prompts).
-4. Optional: integrate Datadog or GCP Cloud Monitoring to track errors and latency.
-
-* **Deliverable:** logs and a short dashboard screenshot.
-
----
-
-### Phase K — Testing, Documentation & Submission
-
-1. Record a **3-minute demo video**: show user flow, some edge cases, architecture slide.
-2. Finalize README: architecture diagram, how to run locally, deploy steps, env var list (no secrets).
-3. Add LICENSE (MIT), app screenshots, and Devpost submission form ready.
-4. Push and tag release.
-
----
-
-## Repo structure (recommended)
-
-```
-/eleven-voice-hack
-  /backend
-    server.js
-    package.json
-    Dockerfile
-  /frontend
-    (React app)
-  /docs
-    architecture.md
-    demo-script.md
-  /keys         (gitignored)
-  README.md
-  LICENSE
-```
-
----
-
-## Environment variables (local & production)
-
-* `ELEVEN_API_KEY` — ElevenLabs API key (keep secret)
-* `GOOGLE_APPLICATION_CREDENTIALS` — path to JSON (local) / use Secret Manager in prod
-* Optional:
-  * `PORT`
-  * `VOICE_ID` (ElevenLabs voice)
-  * `NODE_ENV`
+MIT License.

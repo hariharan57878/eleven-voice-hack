@@ -5,6 +5,12 @@ import { Agent } from './Agent'
 import { Tools } from './Tools'
 import Background3D from './Background3D'
 
+// Configure Axios for Production
+if (import.meta.env.VITE_API_URL) {
+  axios.defaults.baseURL = import.meta.env.VITE_API_URL;
+  console.log("Using API URL:", import.meta.env.VITE_API_URL);
+}
+
 export default function App() {
   const [isRecording, setIsRecording] = useState(false)
   const [status, setStatus] = useState('idle') // idle, recording, processing, playing
