@@ -15,6 +15,15 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 // Configure Multer for handling file uploads (audio for STT)
 const upload = multer({ storage: multer.memoryStorage() });
 
+const cors = require('cors');
+
+// Enable CORS for all routes
+app.use(cors({
+  origin: '*', // Allow all origins for the hackathon (or replace with your specific Vercel URL)
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 // ----- LLM CONFIGURATION (GROQ + FALLBACKS) -----
